@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "banco.h"
 #include "io.h"
-#include "io.c"
 
 void menu_conta(Banco* B, Cliente* c) {
     int op;
