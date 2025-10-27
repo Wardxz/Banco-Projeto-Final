@@ -8,7 +8,7 @@ typedef struct {
     Cliente* dados;
     size_t tam;
     size_t cap;
-}   Branco;
+}   Banco;
 
 void banco_init(Banco* B);
 void banco_free(Banco* B);

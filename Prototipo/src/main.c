@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "banco.h"
 #include "io.h"
+#include "io.c"
 
 void menu_conta(Banco* B, Cliente* c) {
     int op;
