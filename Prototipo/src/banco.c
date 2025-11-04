@@ -1,163 +1,114 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "banco.h"
+#include "io.h"
+#include "conta.h"
+#include "quicksort.h"
+#include <string.h>
 
-void banco_init(Banco* B) {
-    B -> dados = NULL;
-    B -> tam = 0;
-    B -> cap = 0;
-
-    FILE* f = fopen("data/clientes.txt", "r");
-    if (!f) return;
-
-    char linha[512];
-    while (fgets(linha, sizeof(linha), f)) {
-        Cliente c = {0};
-        linha[strcspn(linha, "\n")] = 0;
-        
-        sscanf(linha,
-            "%7[^;];%15[^;];%99[^;];%14[^;];%10[^;];%19[^;];%119[^;];%9[^;];"
-            "%59[^;];%9[^;];%59[^;];%59[^;];%2[^;];%19[^;];%lf;%d", 
-            c.agencia, c.conta, c.nome, c.cpf, c.data_nasc, c.telefone,
-            c.endereco, c.cep, c.local, c.numero_casa, c.bairro,
-            c.cidade, c.estado, c.senha, &c.saldo, &c.ativo);
-    
-        if (B -> tam == B -> cap) {
-            size_t nova = B -> cap ? B -> cap * 2 : 4;
-            Cliente* tmp = realloc(B -> dados, nova * sizeof * B -> dados);
-            if (!tmp) break;
-            B -> dados = tmp;
-            B -> cap = nova;
-        }
-        B -> dados[B -> tam++] = c;
-    }
-    fclose(f);
+static void copia_str(char* destino, const char* origem, size_t tamanho) {
+    strncpy(destino, origem, tamanho);
+    destino[tamanho - 1] = '\0';
 }
-
-int banco_salvar(Banco* B) {
-    FILE* f = fopen("data/clientes.txt", "w");
-    if (!f) return 0;
-
-    for (size_t i = 0; i < B -> tam; i++) {
-        Cliente* c = &B -> dados[i];
-        fprintf(f, "%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%.2f;%d\n",
-        c -> agencia, c -> conta, c -> nome, c -> cpf, c -> data_nasc, c -> telefone, c -> endereco, c -> cep, c -> local, c -> numero_casa, c -> bairro, c -> cidade, c -> estado, c -> senha, c -> saldo, c -> ativo);
-    }
-
-    fclose(f);
-    return 1;
-}
-
-int banco_abrir_conta(Banco* B, Cliente novo) {
-    for(size_t i = 0; i < B -> tam; i++) {
-        if (strcmp(B -> dados[i].cpf, novo.cpf) == 0 ||
-        strcmp(B -> dados[i].conta, novo.conta) == 0) {
-            printf("Erro: conta ou CPF já existente.\n");
-            return 0;
-        }
-    }
-
-    if (B -> tam == B -> cap) {
-        size_t nova = B -> cap ? B -> cap * 2 : 4;
-        Cliente* tmp = realloc(B -> dados, nova * sizeof * B -> dados);
-        if (!tmp) return 0;
-        B -> dados = tmp;
-        B -> cap = nova;
-    }
-
-    novo.saldo = 0.0;
-    novo.ativo = 1;
-    B -> dados[B -> tam++] = novo;
-    banco_salvar(B);
-
-    printf("Conta criada com sucesso!\n");
-    return 1;
-}
-
-int banco_depositar(Banco* B, const char* conta, double valor) {
-    if (valor <= 0) return 0;
-    for(size_t i = 0; i < B -> tam; i++) {
-        if (strcmp(B -> dados[i].conta, conta) == 0 && B -> dados[i].ativo) {
-            B -> dados[i].saldo += valor;
-
-            FILE* f = fopen("data/movimentos.txt", "a");
-            if (f) {
-                fprintf(f, "2025-10-26;%s;DEPOSITO;%.2f;saldo=%.2f\n",
-                conta, valor, B -> dados[i].saldo);
-                fclose(f);
-            }
-
-            banco_salvar(B);
-            return 1;
-        }
-    }
-    printf("Conta nao encontrada.\n");
-    return 0;
-}
-
-int banco_sacar(Banco* B, const char* conta, const char* senha, double valor) {
-    if (valor <= 0) return 0;
-
-    for (size_t i = 0; i < B -> tam; i++) {
-        Cliente* c = &B -> dados[i];
-        if (strcmp(c -> conta, conta) == 0 && c -> ativo) {
-            if (strcmp(c -> senha, senha) != 0) {
-                printf("Senha incorreta.\n");
-                return 0;
-            }
-            if(c -> saldo < valor) {
-                printf("Saldo insuficiente.\n");
-                return 0;
-            }
-            c -> saldo -= valor;
-
-            FILE* f = fopen("data/movimentos.txt", "a");
-            if (f) {
-                fprintf(f, "2025-10-26;%s;SAQUE;%.2f;saldo=%.2f\n",
-                    conta, valor, c -> saldo);
-                fclose(f);
-            }
-
-            banco_salvar(B);
-            return 1;
-        }
-    }
-    printf("Conta nao encontrada.\n");
-    return 0;
-}
-
-int banco_encerrar_conta(Banco* B, const char* conta) {
-    for (size_t i = 0; i < B -> tam; i++) {
-        Cliente* c = &B -> dados[i];
-        if (strcmp(c -> conta, conta) == 0) {
-            if (c -> saldo != 0) {
-                printf("Erro: saldo diferente de zero.\n");
-                return 0;
-            }
-            c -> ativo = 0;
-            banco_salvar(B);
-            printf("Conta encerrada com sucessso.\n");
-            return 1;
-        }
-    }
-    printf("Conta nao encontrada.\n");
-    return 0;
-}
-
-void banco_consultar_cliente(Banco* B, const char* conta) {
-    for (size_t i = 0; i < B -> tam; i++) {
-        Cliente* c = &B -> dados[i];
-        if (strcmp(c -> conta, conta) == 0) {
-            printf("=== CLIENTE ===\nNome: %s\nCPF: %s\nSaldo: %.2f\n", c -> nome, c -> cpf, c -> saldo);
-            return;
-        }
-    }
-    printf("Conta nao encerrada.\n");
+void banco_init(Banco* B, const char* arq_clientes, const char* arq_mov) {
+    lista_init(&B->clientes);
+    copia_str(B->arquivo_clientes, arq_clientes, sizeof(B->arquivo_clientes));
+    copia_str(B->arquivo_mov, arq_mov, sizeof(B->arquivo_mov));
 }
 
 void banco_free(Banco* B) {
-    free(B -> dados);
-    B -> dados = NULL;
-    B -> tam = B -> cap = 0;
+    lista_free(&B->clientes);
+}
+
+int banco_carregar(Banco* B) {
+    return carregar_clientes(B->arquivo_clientes, &B->clientes);
+}
+
+int banco_salvar(const Banco* B) {
+    return salvar_clientes(B->arquivo_clientes, &B->clientes);
+}
+
+int banco_buscar_idx_por_conta(const Banco* B, const char* conta) {
+    return lista_find_conta(&B->clientes, conta);
+}
+
+int banco_consultar_cliente(const Banco* B, const char* conta, Cliente* out) {
+    int idx = banco_buscar_idx_por_conta(B, conta);
+    if (idx < 0) return 0;
+
+    if (out) {
+        *out = B->clientes.dados[idx];
+    }
+    return 1;
+}
+
+int banco_abrir_conta(Banco* B, const Cliente* novo) {
+    int ok = abrir_conta(&B->clientes, novo);
+    if (!ok) return 0;
+
+    return banco_salvar(B);
+}
+
+int banco_encerrar_conta(Banco* B, const char* conta) {
+    int ok = encerrar_conta(&B->clientes, conta);
+    if (!ok) return 0;
+
+    return banco_salvar(B);
+}
+
+int banco_alterar_dados(Banco* B, const char* conta, const Cliente* novos) {
+    int idx = banco_buscar_idx_por_conta(B, conta);
+    if (idx < 0) return 0;
+
+    Cliente* c = &B->clientes.dados[idx];
+    Cliente novo = *c;
+
+    copia_str(novo.nome,        novos->nome,        sizeof(novo.nome));
+    copia_str(novo.cpf,         novos->cpf,         sizeof(novo.cpf));
+    copia_str(novo.data_nasc,   novos->data_nasc,   sizeof(novo.data_nasc));
+    copia_str(novo.telefone,    novos->telefone,    sizeof(novo.telefone));
+    copia_str(novo.endereco,    novos->endereco,    sizeof(novo.endereco));
+    copia_str(novo.cep,         novos->cep,         sizeof(novo.cep));
+    copia_str(novo.local,       novos->local,       sizeof(novo.local));
+    copia_str(novo.numero_casa, novos->numero_casa, sizeof(novo.numero_casa));
+    copia_str(novo.bairro,      novos->bairro,      sizeof(novo.bairro));
+    copia_str(novo.cidade,      novos->cidade,      sizeof(novo.cidade));
+    copia_str(novo.estado,      novos->estado,      sizeof(novo.estado));
+    copia_str(novo.senha,       novos->senha,       sizeof(novo.senha));
+
+    *c = novo;
+    return banco_salvar(B);
+}
+int banco_depositar(Banco* B, const char* conta, double valor) {
+    int idx = banco_buscar_idx_por_conta(B, conta);
+    if (idx < 0) return 0;
+
+    if (!depositar(&B->clientes.dados[idx], valor))
+        return 0;
+
+    if (!registrar_mov(B->arquivo_mov, conta, "DEPOSITO", valor, B->clientes.dados[idx].saldo))
+        return 0;
+
+    return banco_salvar(B);
+}
+
+int banco_sacar(Banco* B, const char* conta, double valor) {
+    int idx = banco_buscar_idx_por_conta(B, conta);
+    if (idx < 0) return 0;
+
+    if (!sacar(&B->clientes.dados[idx], valor))
+        return 0;
+
+    if (!registrar_mov(B->arquivo_mov, conta, "SAQUE", valor, B->clientes.dados[idx].saldo))
+        return 0;
+
+    return banco_salvar(B);
+}
+
+void banco_listar_ordenado_por_nome(Banco* B) {
+    if (B->clientes.tam == 0) return;
+    quicksort_nome(B->clientes.dados, 0, (int)B->clientes.tam - 1);
+}
+
+void banco_listar_ordenado_por_conta(Banco* B) {
+    if (B->clientes.tam == 0) return;
+    quicksort_conta(B->clientes.dados, 0, (int)B->clientes.tam - 1);
 }
