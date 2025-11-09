@@ -1,0 +1,20 @@
+#include <stdio.h>
+#include "service.h"
+
+int main() {
+    cadastrar_usuario("Ana", 25);
+    cadastrar_usuario("Bruno", 30);
+
+    int id_busca;
+    printf("Digite um ID para buscar: ");
+    scanf("%d", &id_busca);
+
+    Usuario* u = obter_usuario(id_busca);
+
+    if (u != NULL)
+        printf("Usuário encontrado: %s (%d anos)\n", u->nome, u->idade);
+    else
+        printf("Usuário não encontrado!\n");
+
+    return 0;
+}
