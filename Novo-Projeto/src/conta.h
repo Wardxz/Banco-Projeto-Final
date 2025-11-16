@@ -33,7 +33,7 @@ extern int proximo_numero;            // número sequencial para novas contas
 
 /* Funções de busca e exibição */
 int encontrar_conta_por_numero(const Conta contas[], int qtd, int numero);
-int encontrar_conta_por_cpf(const Conta contas[], int qtd, const char* cpf);
+int encontrar_conta_ativa_por_cpf(const Conta contas[], int qtd, const char* cpf);
 void mostrar_dados(const Conta* c);
 
 /* Operações obrigatórias */

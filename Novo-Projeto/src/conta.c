@@ -25,9 +25,9 @@ int encontrar_conta_por_numero(const Conta contas[], int qtd, int numero) {
  * Busca uma conta pelo CPF.
  * Retorna o índice no vetor ou -1 se não encontrada.
  */
-int encontrar_conta_por_cpf(const Conta contas[], int qtd, const char* cpf) {
+int encontrar_conta_ativa_por_cpf(const Conta contas[], int qtd, const char* cpf) {
     for (int i = 0; i < qtd; i++) {
-        if (strcmp(contas[i].cpf, cpf) == 0) {
+        if (strcmp(contas[i].cpf, cpf) == 0 && contas[i].status == ATIVA) { // Verifica se é ATIVA
             return i;
         }
     }
@@ -65,7 +65,7 @@ int abrir_conta(const char* nome, const char* cpf, const char* agencia, const ch
         return 0;
     }
 
-    if (encontrar_conta_por_cpf(contas, qtd_contas, cpf) != -1) {
+    if (encontrar_conta_ativa_por_cpf(contas, qtd_contas, cpf) != -1) { // Usa a nova função
         printf("Erro: já existe uma conta ativa com este CPF.\n");
         return 0;
     }
