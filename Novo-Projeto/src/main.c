@@ -1,3 +1,18 @@
+/*
+* Instruções de Compilação Rápida (GCC):
+*
+* * Este projeto é composto por três arquivos: main.c, conta.c e conta.h.
+*
+* 1. Para compilar e gerar o executável 'main.exe', use o seguinte comando no terminal:
+* gcc main.c conta.c -o main.exe
+*
+* 2. Para rodar o sistema após a compilação:
+* ./main.exe
+*
+* Requisito: É obrigatório usar structs e funções, e os dados devem ficar
+* em memória (vetores).
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
