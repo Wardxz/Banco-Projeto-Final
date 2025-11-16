@@ -17,11 +17,11 @@ void exibir_menu() {
     printf("2. Depositar\n");
     printf("3. Sacar\n");
     printf("4. Transferir\n");
-    printf("5. Atualizar dados de contato\n");
-    printf("6. Encerrar conta\n");
-    printf("7. Listar todas as contas\n");
-    printf("8. Listar apenas contas ativas\n");
-    printf("9. Listar apenas contas encerradas\n");
+    printf("5. Consultar saldo e dados\n");
+    printf("6. Atualizar telefone e agencia\n");
+    printf("7. Encerrar conta\n");
+    printf("8. Listar contas\n");
+    printf("9. Listar apenas contas ativas\n");
     printf("0. Sair\n");
     printf("========================================\n");
     printf("Escolha uma opção: ");
@@ -105,6 +105,32 @@ int main() {
             }
 
             case 5: {
+                int tipo_busca;
+                printf("Consultar por:\n1. Número da conta\n2. CPF\nEscolha: ");
+                scanf("%d", &tipo_busca);
+                limpar_buffer();
+
+                if (tipo_busca == 1) {
+                    int numero;
+                    printf("Número da conta: ");
+                    scanf("%d", &numero);
+                    limpar_buffer();
+                    int i = encontrar_conta_por_numero(contas, qtd_contas, numero);
+                    mostrar_dados((i != -1) ? &contas[i] : NULL);
+                } else if (tipo_busca == 2) {
+                    char cpf[TAM_CPF];
+                    printf("CPF: ");
+                    fgets(cpf, sizeof(cpf), stdin);
+                    cpf[strcspn(cpf, "\n")] = '\0';
+                    int i = encontrar_conta_ativa_por_cpf(contas, qtd_contas, cpf);
+                    mostrar_dados((i != -1) ? &contas[i] : NULL);
+                } else {
+                    printf("Opção de busca inválida.\n");
+                }
+                break;
+            }
+
+            case 6: {
                 int numero;
                 char novo_tel[TAM_TELEFONE];
                 char nova_ag[TAM_AGENCIA];
@@ -125,7 +151,7 @@ int main() {
                 break;
             }
 
-            case 6: {
+            case 7: {
                 int numero;
                 printf("Número da conta a encerrar: ");
                 scanf("%d", &numero);
@@ -134,16 +160,12 @@ int main() {
                 break;
             }
 
-            case 7:
+            case 8:
                 listar_contas(-1);  // todas
                 break;
 
-            case 8:
-                listar_contas(ATIVA);
-                break;
-
             case 9:
-                listar_contas(ENCERRADA);
+                listar_contas(ATIVA);
                 break;
 
             case 0:
